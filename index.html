@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Mi Agenda en Voz Alta</title>
+<meta name="theme-color" content="#14172B">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  :root{
+    --bg: #14172B;
+    --surface: #1E2240;
+    --surface-2: #262b4d;
+    --cream: #F4F1EA;
+    --amber: #E8A33D;
+    --mint: #4FD1C5;
+    --muted: #8b8fb0;
+    --danger: #EF6F53;
+    --radius: 20px;
+  }
+  *{ box-sizing: border-box; }
+  html,body{ height: 100%; }
+  body{
+    margin:0;
+    background: radial-gradient(120% 100% at 50% -10%, #1c2050 0%, #14172B 55%, #101226 100%);
+    color: var(--cream);
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    display:flex;
+    justify-content:center;
+  }
+  .screen{
+    width:100%;
+    max-width: 480px;
+    padding: max(24px, env(safe-area-inset-top)) 20px calc(40px + env(safe-area-inset-bottom));
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  .eyebrow{
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--mint);
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .fecha{
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 28px;
+    text-align:center;
+    line-height:1.2;
+    margin: 0 0 28px;
+    text-transform: capitalize;
+  }
+  .orb-wrap{
+    position: relative;
+    width: 176px; height: 176px;
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom: 18px;
+  }
+  .ring{
+    position:absolute;
+    border-radius:50%;
+    border: 1.5px solid rgba(79,209,197,0.35);
+    opacity:0;
+  }
+  .orb-wrap.hablando .ring{ animation: pulso 1.8s ease-out infinite; }
+  .ring:nth-child(2){ animation-delay: .6s !important; }
+  .ring:nth-child(3){ animation-delay: 1.2s !important; }
+  @keyframes pulso{
+    0%{ width:100px; height:100px; opacity:0.55; }
+    100%{ width:176px; height:176px; opacity:0; }
+  }
+  .orb{
+    position:relative;
+    width:100px; height:100px;
+    border-radius:50%;
+    border:none;
+    background: linear-gradient(155deg, var(--amber), #d97f22 70%);
+    box-shadow: 0 10px 30px -8px rgba(232,163,61,0.55), inset 0 2px 6px rgba(255,255,255,0.25);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    transition: transform .15s ease;
+  }
+  .orb:active{ transform: scale(0.94); }
+  .orb svg{ width:38px; height:38px; }
+  .orb.conectado{ background: linear-gradient(155deg, var(--mint), #2fa89c 70%); box-shadow: 0 10px 30px -8px rgba(79,209,197,0.55), inset 0 2px 6px rgba(255,255,255,0.25); }
+  .instruccion{
+    color: var(--muted);
+    font-size: 14px;
+    text-align:center;
+    margin-bottom: 30px;
+    min-height: 18px;
+  }
+  .banner-config{
+    width:100%;
+    background: rgba(239,111,83,0.12);
+    border: 1px solid rgba(239,111,83,0.4);
+    color: #f5b9a8;
+    font-size:13px;
+    line-height:1.5;
+    padding:12px 14px;
+    border-radius: 14px;
+    margin-bottom: 22px;
+  }
+  .tarjeta{
+    width:100%;
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 20px 18px;
+    margin-bottom: 14px;
+    border: 1px solid rgba(255,255,255,0.04);
+  }
+  .tarjeta h3{
+    margin:0 0 12px;
+    font-size:11px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color: var(--amber);
+    font-weight:700;
+  }
+  .evento{
+    display:flex;
+    gap:12px;
+    padding: 9px 0;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .evento:first-of-type{ border-top:none; padding-top:0; }
+  .evento .hora{
+    flex-shrink:0;
+    width:56px;
+    font-weight:600;
+    font-size:14px;
+    color: var(--mint);
+  }
+  .evento .titulo{ font-size:14.5px; color: var(--cream); }
+  .vacio{ color: var(--muted); font-size: 14px; }
+  .proximo-texto{ font-size: 14.5px; line-height:1.5; }
+  .proximo-texto b{ color: var(--amber); }
+  .acciones{ width:100%; text-align:center; margin-top:6px; }
+  .btn-conectar{
+    width:100%;
+    padding:15px;
+    border-radius:16px;
+    border:none;
+    background: var(--cream);
+    color: var(--bg);
+    font-weight:700;
+    font-size:15px;
+    font-family:'Inter',sans-serif;
+    cursor:pointer;
+  }
+  .btn-conectar:active{ opacity:0.85; }
+  .link-desconectar{
+    display:inline-block;
+    margin-top:16px;
+    color: var(--muted);
+    font-size:13px;
+    text-decoration:underline;
+    background:none;
+    border:none;
+    cursor:pointer;
+    font-family:'Inter',sans-serif;
+  }
+  .oculto{ display:none !important; }
+  @media (prefers-reduced-motion: reduce){
+    .orb-wrap.hablando .ring{ animation:none; opacity:0.3; }
+  }
+</style>
+</head>
+<body>
+<div class="screen">
+  <div class="eyebrow">Tu agenda, en voz alta</div>
+  <div class="fecha" id="fecha"></div>
+
+  <div id="bannerConfig" class="banner-config oculto">
+    ⚠️ Falta configurar esta app: abre <code>index.html</code> y sustituye <code>TU_CLIENT_ID_AQUI</code> por el Client ID de tu proyecto de Google Cloud. Revisa las instrucciones de instalación.
+  </div>
+
+  <div class="orb-wrap" id="orbWrap">
+    <div class="ring"></div>
+    <div class="ring"></div>
+    <div class="ring"></div>
+    <button class="orb" id="btnOrb" aria-label="Consultar agenda">
+      <svg id="iconoOrb" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z" stroke="#14172B" stroke-width="1.8"/>
+        <path d="M19 11a7 7 0 0 1-14 0M12 18v3" stroke="#14172B" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+  <div class="instruccion" id="instruccion">Toca para conectar tu Google Calendar</div>
+
+  <div id="resultados" class="oculto" style="width:100%;">
+    <div class="tarjeta">
+      <h3>Hoy</h3>
+      <div id="listaHoy"></div>
+    </div>
+    <div class="tarjeta">
+      <h3>Mañana</h3>
+      <div id="listaManana"></div>
+    </div>
+    <div class="tarjeta">
+      <h3>Próximo compromiso</h3>
+      <div id="proximo" class="proximo-texto"></div>
+    </div>
+    <button class="link-desconectar" id="btnDesconectar">Desconectar cuenta</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   ⚠️ CONFIGURACIÓN — sustituye esto por tu propio Client ID
+   (lo obtienes en Google Cloud Console, ver instrucciones)
+   ============================================================ */
+const CLIENT_ID = 1034616378330-ms5tusgt88dimmo4vi9nhjcod8pjfgem.apps.googleusercontent.com';
+const SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
+
+let tokenClient = null;
+let accessToken = null;
+let hablando = false;
+
+const $ = (id) => document.getElementById(id);
+
+// --- Fecha de cabecera ---
+$('fecha').textContent = new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+
+if (CLIENT_ID.includes(1034616378330-ms5tusgt88dimmo4vi9nhjcod8pjfgem.apps.googleusercontent.com)) {
+  $('bannerConfig').classList.remove('oculto');
+}
+
+// --- Utilidades de fecha ---
+function inicioDia(offsetDias = 0) {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + offsetDias);
+  return d;
+}
+function eventoInicio(ev) {
+  return ev.start.dateTime ? new Date(ev.start.dateTime) : new Date(ev.start.date + 'T00:00:00');
+}
+function formatoHora(ev) {
+  if (!ev.start.dateTime) return 'Todo el día';
+  return eventoInicio(ev).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+}
+function formatoFechaLarga(d) {
+  return d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+}
+
+// --- Google Identity Services ---
+function initGis() {
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPE,
+    callback: (resp) => {
+      if (resp.error) {
+        mostrarError('No se ha podido conceder el acceso a tu calendario.');
+        return;
+      }
+      accessToken = resp.access_token;
+      $('btnOrb').classList.add('conectado');
+      consultarYLeer();
+    },
+  });
+}
+window.addEventListener('load', () => {
+  if (!CLIENT_ID.includes('1034616378330-ms5tusgt88dimmo4vi9nhjcod8pjfgem.apps.googleusercontent.com')) initGis();
+});
+
+$('btnOrb').addEventListener('click', () => {
+  if (!tokenClient) {
+    mostrarError('Configura primero tu Client ID (ver instrucciones de instalación).');
+    return;
+  }
+  tokenClient.requestAccessToken({ prompt: accessToken ? '' : 'consent' });
+});
+
+$('btnDesconectar').addEventListener('click', () => {
+  if (accessToken) google.accounts.oauth2.revoke(accessToken, () => {});
+  accessToken = null;
+  $('btnOrb').classList.remove('conectado');
+  $('resultados').classList.add('oculto');
+  $('instruccion').textContent = 'Toca para conectar tu Google Calendar';
+});
+
+// --- Llamadas a la API de Calendar ---
+async function pedirEventos(timeMin, timeMax, maxResults) {
+  const params = new URLSearchParams({
+    singleEvents: 'true',
+    orderBy: 'startTime',
+    timeMin: timeMin.toISOString(),
+  });
+  if (timeMax) params.set('timeMax', timeMax.toISOString());
+  if (maxResults) params.set('maxResults', String(maxResults));
+  const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?${params}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  return data.items || [];
+}
+
+async function consultarYLeer() {
+  $('instruccion').textContent = 'Consultando tu calendario…';
+  $('resultados').classList.add('oculto');
+  try {
+    const hoyInicio = inicioDia(0);
+    const mananaInicio = inicioDia(1);
+    const pasadoInicio = inicioDia(2);
+
+    const combinados = await pedirEventos(hoyInicio, pasadoInicio);
+    const hoy = combinados.filter(e => eventoInicio(e) < mananaInicio);
+    const manana = combinados.filter(e => eventoInicio(e) >= mananaInicio);
+    const futuros = await pedirEventos(pasadoInicio, null, 1);
+    const siguiente = futuros[0] || null;
+
+    pintarResultados(hoy, manana, siguiente);
+    leerEnVoz(construirTexto(hoy, manana, siguiente));
+    $('instruccion').textContent = 'Vuelve a tocar para actualizar tu agenda';
+  } catch (err) {
+    mostrarError('No se ha podido consultar el calendario. Comprueba tu conexión.');
+  }
+}
+
+// --- Pintar en pantalla ---
+function pintarLista(contenedor, eventos) {
+  contenedor.innerHTML = '';
+  if (!eventos.length) {
+    contenedor.innerHTML = '<div class="vacio">Sin compromisos</div>';
+    return;
+  }
+  eventos.forEach(ev => {
+    const fila = document.createElement('div');
+    fila.className = 'evento';
+    fila.innerHTML = `<div class="hora">${formatoHora(ev)}</div><div class="titulo">${ev.summary || 'Sin título'}</div>`;
+    contenedor.appendChild(fila);
+  });
+}
+
+function pintarResultados(hoy, manana, siguiente) {
+  pintarLista($('listaHoy'), hoy);
+  pintarLista($('listaManana'), manana);
+  const cont = $('proximo');
+  if (siguiente) {
+    const d = eventoInicio(siguiente);
+    const hora = siguiente.start.dateTime ? ', a las ' + formatoHora(siguiente) : '';
+    cont.innerHTML = `<b>${siguiente.summary || 'Sin título'}</b><br>${formatoFechaLarga(d)}${hora}`;
+  } else {
+    cont.innerHTML = '<span class="vacio">No hay más compromisos registrados</span>';
+  }
+  $('resultados').classList.remove('oculto');
+}
+
+// --- Construir el texto para hablar ---
+function construirTexto(hoy, manana, siguiente) {
+  const partes = [];
+  const hoyStr = formatoFechaLarga(new Date());
+  partes.push(hoy.length
+    ? `Hoy, ${hoyStr}, tienes ${hoy.length} ${hoy.length === 1 ? 'compromiso' : 'compromisos'}: ${listarParaVoz(hoy)}.`
+    : `Hoy, ${hoyStr}, no tienes ningún compromiso.`);
+
+  const mananaStr = formatoFechaLarga(inicioDia(1));
+  partes.push(manana.length
+    ? `Mañana, ${mananaStr}, tienes ${manana.length} ${manana.length === 1 ? 'compromiso' : 'compromisos'}: ${listarParaVoz(manana)}.`
+    : `Mañana, ${mananaStr}, no tienes ningún compromiso.`);
+
+  if (siguiente) {
+    const d = eventoInicio(siguiente);
+    const hora = siguiente.start.dateTime ? `, a las ${formatoHora(siguiente)}` : '';
+    partes.push(`Tu siguiente compromiso después de mañana es ${siguiente.summary || 'sin título'}, el ${formatoFechaLarga(d)}${hora}.`);
+  } else {
+    partes.push('No tienes más compromisos próximos registrados en tu calendario.');
+  }
+  return partes.join(' ');
+}
+function listarParaVoz(eventos) {
+  return eventos.map(e => `${formatoHora(e)}, ${e.summary || 'sin título'}`).join('. Luego, ');
+}
+
+// --- Voz ---
+function leerEnVoz(texto) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(texto);
+  u.lang = 'es-ES';
+  u.rate = 1;
+  hablando = true;
+  $('orbWrap').classList.add('hablando');
+  u.onend = () => { hablando = false; $('orbWrap').classList.remove('hablando'); };
+  u.onerror = () => { hablando = false; $('orbWrap').classList.remove('hablando'); };
+  window.speechSynthesis.speak(u);
+}
+
+function mostrarError(msg) {
+  $('instruccion').textContent = msg;
+  leerEnVoz(msg);
+}
+
+// --- Service worker (permite instalar como app) ---
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>
