@@ -209,7 +209,7 @@
       <div id="listaManana"></div>
     </div>
     <div class="tarjeta">
-      <h3>Próximo compromiso</h3>
+      <h3>Próxima cita</h3>
       <div id="proximo" class="proximo-texto"></div>
     </div>
     <button class="link-desconectar" id="btnDesconectar">Desconectar cuenta</button>
@@ -347,7 +347,7 @@ async function consultarYLeer() {
 function pintarLista(contenedor, eventos) {
   contenedor.innerHTML = '';
   if (!eventos.length) {
-    contenedor.innerHTML = '<div class="vacio">Sin compromisos</div>';
+    contenedor.innerHTML = '<div class="vacio">Sin citas</div>';
     return;
   }
   eventos.forEach(ev => {
@@ -367,7 +367,7 @@ function pintarResultados(hoy, manana, siguiente) {
     const hora = siguiente.start.dateTime ? ', a las ' + formatoHora(siguiente) : '';
     cont.innerHTML = `<b>${siguiente.summary || 'Sin título'}</b><br>${formatoFechaLarga(d)}${hora}`;
   } else {
-    cont.innerHTML = '<span class="vacio">No hay más compromisos registrados</span>';
+    cont.innerHTML = '<span class="vacio">No hay más citas registradas</span>';
   }
   $('resultados').classList.remove('oculto');
 }
@@ -377,20 +377,20 @@ function construirTexto(hoy, manana, siguiente) {
   const partes = [];
   const hoyStr = formatoFechaLarga(new Date());
   partes.push(hoy.length
-    ? `Hoy, ${hoyStr}, tienes ${hoy.length} ${hoy.length === 1 ? 'compromiso' : 'compromisos'}: ${listarParaVoz(hoy)}.`
-    : `Hoy, ${hoyStr}, no tienes ningún compromiso.`);
+    ? `Hoy, ${hoyStr}, tienes ${hoy.length} ${hoy.length === 1 ? 'cita' : 'citas'}: ${listarParaVoz(hoy)}.`
+    : `Hoy, ${hoyStr}, no tienes ninguna cita.`);
 
   const mananaStr = formatoFechaLarga(inicioDia(1));
   partes.push(manana.length
-    ? `Mañana, ${mananaStr}, tienes ${manana.length} ${manana.length === 1 ? 'compromiso' : 'compromisos'}: ${listarParaVoz(manana)}.`
-    : `Mañana, ${mananaStr}, no tienes ningún compromiso.`);
+    ? `Mañana, ${mananaStr}, tienes ${manana.length} ${manana.length === 1 ? 'cita' : 'citas'}: ${listarParaVoz(manana)}.`
+    : `Mañana, ${mananaStr}, no tienes ninguna cita.`);
 
   if (siguiente) {
     const d = eventoInicio(siguiente);
     const hora = siguiente.start.dateTime ? `, a las ${formatoHora(siguiente)}` : '';
-    partes.push(`Tu siguiente compromiso después de mañana es ${siguiente.summary || 'sin título'}, el ${formatoFechaLarga(d)}${hora}.`);
+    partes.push(`Tu siguiente cita después de mañana es ${siguiente.summary || 'sin título'}, el ${formatoFechaLarga(d)}${hora}.`);
   } else {
-    partes.push('No tienes más compromisos próximos registrados en tu calendario.');
+    partes.push('No tienes más citas próximas registradas en tu calendario.');
   }
   return partes.join(' ');
 }
@@ -404,7 +404,7 @@ function leerEnVoz(texto) {
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(texto);
   u.lang = 'es-ES';
-  u.rate = 1;
+  u.rate = 1.3;
   hablando = true;
   $('orbWrap').classList.add('hablando');
   u.onend = () => { hablando = false; $('orbWrap').classList.remove('hablando'); };
