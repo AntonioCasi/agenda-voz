@@ -262,6 +262,7 @@ function initGis() {
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: CLIENT_ID,
     scope: SCOPE,
+    login_hint: 'antcasiarb@gmail.com',
     // prompt vacío: Google solo pide cuenta + permiso la PRIMERA vez.
     // Las siguientes veces, si la sesión sigue activa, responde en silencio.
     prompt: '',
