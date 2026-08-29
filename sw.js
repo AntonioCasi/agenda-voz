@@ -1,4 +1,4 @@
-const CACHE = 'agenda-voz-v1';
+const CACHE = 'agenda-voz-v2';
 const ARCHIVOS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (evento) => {
@@ -7,13 +7,17 @@ self.addEventListener('install', (evento) => {
 });
 
 self.addEventListener('activate', (evento) => {
-  evento.waitUntil(self.clients.claim());
+  evento.waitUntil(
+    caches.keys()
+      .then((nombres) => Promise.all(nombres.filter((n) => n !== CACHE).map((n) => caches.delete(n))))
+      .then(() => self.clients.claim())
+  );
 });
 
-// La app siempre pide los datos del calendario en directo a Google;
-// aquí solo cacheamos el "cascarón" de la app para que abra rápido y sea instalable.
+// Siempre pide el archivo fresco a internet (sin usar la caché HTTP del navegador).
+// Solo si no hay conexión, recurre a la última copia guardada.
 self.addEventListener('fetch', (evento) => {
   evento.respondWith(
-    fetch(evento.request).catch(() => caches.match(evento.request))
+    fetch(evento.request, { cache: 'no-store' }).catch(() => caches.match(evento.request))
   );
 });
