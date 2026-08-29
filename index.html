@@ -256,15 +256,28 @@ function formatoFechaLarga(d) {
 }
 
 // --- Google Identity Services ---
+let reintentoForzado = false;
+
 function initGis() {
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: CLIENT_ID,
     scope: SCOPE,
+    // prompt vacío: Google solo pide cuenta + permiso la PRIMERA vez.
+    // Las siguientes veces, si la sesión sigue activa, responde en silencio.
+    prompt: '',
     callback: (resp) => {
       if (resp.error) {
+        if (!reintentoForzado) {
+          // La sesión pudo caducar o revocaste el acceso: pedimos consentimiento explícito una vez
+          reintentoForzado = true;
+          tokenClient.requestAccessToken({ prompt: 'consent' });
+          return;
+        }
+        reintentoForzado = false;
         mostrarError('No se ha podido conceder el acceso a tu calendario.');
         return;
       }
+      reintentoForzado = false;
       accessToken = resp.access_token;
       $('btnOrb').classList.add('conectado');
       consultarYLeer();
@@ -280,7 +293,7 @@ $('btnOrb').addEventListener('click', () => {
     mostrarError('Configura primero tu Client ID (ver instrucciones de instalación).');
     return;
   }
-  tokenClient.requestAccessToken({ prompt: accessToken ? '' : 'consent' });
+  tokenClient.requestAccessToken();
 });
 
 $('btnDesconectar').addEventListener('click', () => {
